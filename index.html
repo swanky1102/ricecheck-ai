@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PriceCheck AI</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span>💰</span> PriceCheck <b>AI</b></div>
+  <nav><a href="#search">Search</a><a href="#saved">Saved</a><button id="scanNav">📷 Scan</button></nav>
+</header>
+
+<main>
+<section class="hero" id="search">
+  <div class="hero-copy">
+    <span class="pill">🇿🇦 South Africa • MVP</span>
+    <h1>Buy smarter.<br><em>Pay less.</em></h1>
+    <p>Compare prices, find compatible alternatives, and use AI to decide what you should actually buy.</p>
+    <div class="searchbox">
+      <input id="searchInput" placeholder="Try “16GB DDR4 RAM under R800”" />
+      <button id="searchBtn">Search</button>
+    </div>
+    <div class="quick">
+      <button data-q="16GB DDR4 RAM">16GB DDR4 RAM</button>
+      <button data-q="1TB NVMe SSD">1TB NVMe SSD</button>
+      <button data-q="RTX 4060">RTX 4060</button>
+    </div>
+  </div>
+  <div class="hero-card">
+    <div class="mini-label">AI DEAL CHECK</div>
+    <div class="deal-price">R699</div>
+    <div class="deal-title">16GB DDR4-3200 SO-DIMM</div>
+    <div class="deal-row"><span>Typical price</span><b>R849</b></div>
+    <div class="deal-row"><span>You save</span><b class="green">R150</b></div>
+    <div class="good">🟢 GOOD DEAL</div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head"><div><span class="eyebrow">RESULTS</span><h2 id="resultTitle">Popular deals</h2></div><span id="resultCount" class="muted"></span></div>
+  <div id="results" class="grid"></div>
+</section>
+
+<section class="section scanner" id="scanner">
+  <div class="scanner-copy">
+    <span class="eyebrow">AI VISION</span>
+    <h2>Scan a product.</h2>
+    <p>Take a photo of a product label or box. The MVP simulates AI identification and returns comparable products.</p>
+    <button class="primary" id="scanBtn">📷 Scan Product</button>
+    <input id="fileInput" type="file" accept="image/*" hidden>
+    <div id="scanStatus" class="scan-status"></div>
+  </div>
+  <div class="scan-demo">
+    <div class="camera">📷<span>Product camera</span></div>
+    <div class="scan-line"></div>
+  </div>
+</section>
+
+<section class="section" id="saved">
+  <div class="section-head"><div><span class="eyebrow">YOUR LIST</span><h2>Saved products</h2></div></div>
+  <div id="savedList" class="saved-list"></div>
+</section>
+</main>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-card">
+    <button class="close" id="closeModal">×</button>
+    <span class="eyebrow">AI COMPATIBILITY CHECK</span>
+    <h2 id="modalTitle">Will it work?</h2>
+    <p id="modalText"></p>
+    <div class="compat">✓ Compatible with the selected device</div>
+    <button class="primary" id="modalSave">Save product</button>
+  </div>
+</div>
+
+<footer>PriceCheck AI MVP • Demo data only — connect live retailer feeds/APIs before production.</footer>
+<script src="app.js"></script>
+</body>
+</html>
