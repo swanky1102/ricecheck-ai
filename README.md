@@ -1,49 +1,52 @@
-# PriceCheck AI V10
+# PriceCheck AI
 
-South Africa-focused price comparison app with a static frontend and secure-backend foundation.
+South Africa-focused price comparison app with a static frontend and a Supabase Edge Function backend.
 
-## V10 upgrades
-- Normalized frontend handling for backend search results
-- Supabase Edge Function search endpoint
-- Server-side Claude vision endpoint (identify-product)
-- Compatibility API endpoint
-- Price-history API endpoint
-- Hardened Supabase schema with indexes and Row Level Security
-- Safe demo seed data
-- Stale-price detection after 72 hours
-- Stock and retailer metadata in search responses
-- No private AI, retailer or database secrets in the browser
+## Production-ready foundation
+- Natural-language product search with local fallback
+- Normalized backend offer responses
+- RAM, SSD, GPU, CPU and laptop category detection
+- Sorting and category filtering
+- Persistent saved products
+- Backend price-history endpoint
+- Backend authenticated alert creation
+- Compatibility endpoint with explicit verification warnings
+- Secure Claude vision endpoint kept server-side
+- Stale-offer detection after 72 hours
+- Supabase Row Level Security schema
+- Demo catalog clearly separated from live retailer data
+- No private API/database secrets in browser code
+- GitHub Actions JavaScript syntax validation
 
-## Current status
-The GitHub Pages frontend still works without a backend and falls back to demo data. The Supabase backend files are ready, but they are not connected to your Supabase project until you deploy them and set the frontend function URL.
+## Live-data boundary
+Demo prices are not live retailer quotes. Real South African prices must come from retailer APIs, feeds, affiliate/developer programs, or another source that permits the intended use.
 
-Demo prices are examples and are not live retailer quotes.
+Never put an Anthropic API key, Supabase service-role/secret key, retailer credential, or other private credential in frontend code.
 
-## V10 API layout
-- GET /functions/v1/search?q=...
-- POST /functions/v1/identify-product
-- POST /functions/v1/compatibility
-- GET /functions/v1/history?product_id=...
+## Frontend configuration
+Set the public search Edge Function URL in backend-config.js, or leave it empty to use the local demo catalog.
+
+Available backend routes: /search?q=..., /history?product_id=..., /alerts, /compatibility, /identify-product
 
 ## Supabase setup
 1. Create a Supabase project.
-2. Run supabase/schema.sql in the SQL editor.
-3. Run supabase/seed.sql if you want the demo catalog in the database.
-4. Link/deploy the Edge Functions in supabase/functions/.
-5. Add ANTHROPIC_API_KEY as a server-side Edge Function secret before using real Claude vision.
-6. Put your public search function URL in backend-config.js.
-7. Never put an Anthropic API key, retailer secret, or Supabase secret/service-role key in frontend JavaScript.
+2. Run supabase/schema.sql.
+3. Optionally run supabase/seed.sql for demo records.
+4. Deploy the Edge Functions.
+5. Set server-side ANTHROPIC_API_KEY only if Claude vision is enabled.
+6. Configure Supabase Auth before using real user alerts.
+7. Replace demo seed offers with permitted retailer data feeds.
 
-## Live retailer data
-Do not scrape or publish retailer prices unless the source permits it. Replace the demo seed with permitted retailer APIs, feeds, affiliate data, or other compliant sources and record last_seen_at so stale offers can be marked.
+## Security
+- RLS is enabled on database tables.
+- Alert creation is authenticated server-side.
+- Service-role/secret credentials never belong in the browser.
+- Compatibility output is advisory and does not guarantee hardware fit.
+- Stale offers are marked instead of silently presented as current.
+- External offer links use noopener noreferrer.
+
+## Validation
+GitHub Actions checks browser JavaScript syntax on pushes and pull requests.
 
 ## Live site
 https://swanky1102.github.io/ricecheck-ai/
-
-## Next production milestones
-1. Connect the Supabase project.
-2. Deploy and smoke-test all Edge Functions.
-3. Add authenticated accounts and server-side alerts.
-4. Add permitted South African retailer feeds.
-5. Add real Claude product identification and structured query parsing.
-6. Add price-history charts and affiliate/deep links.
