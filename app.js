@@ -102,3 +102,5 @@ function processScan(file){
  },900);
 }
 updateBadge();render(filtered());renderSaved();
+
+// V3 backend adapter: use a secure /api/search endpoint when deployed; otherwise keep demo search working.\nasync function backendSearch(q){try{const r=await fetch("/api/search?q="+encodeURIComponent(q),{headers:{Accept:"application/json"}});if(!r.ok)throw new Error("API unavailable");const d=await r.json();return Array.isArray(d.products)?d.products:null}catch(e){return null;}}\nconst demoSearch=search;\nsearch=async function(q){state.query=(q||"").trim().toLowerCase();$("resultTitle").textContent=state.query?("Results for “"+q.trim()+"”"):"Popular deals";const remote=state.query?await backendSearch(state.query):null;if(remote){render(remote);}else{render(filtered());}document.querySelector(".section").scrollIntoView({behavior:"smooth",block:"start"});};\n
