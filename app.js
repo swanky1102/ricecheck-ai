@@ -1,3 +1,14 @@
+async function backendSearchV4(q){
+  const base=window.PRICECHECK_API_URL;
+  if(!base)return null;
+  try{
+    const r=await fetch(base+"?q="+encodeURIComponent(q));
+    if(!r.ok)throw new Error("API "+r.status);
+    const d=await r.json();
+    return Array.isArray(d.products)?d.products:null;
+  }catch(e){return null;}
+}
+
 const products=[
 {id:1,name:"SK hynix 16GB DDR4-3200 SO-DIMM",store:"Wootware",price:699,typical:849,icon:"🧠",tag:"Best value",category:"ram",spec:"16GB • DDR4 • 3200 MT/s • SO-DIMM",compat:"ram",value:92},
 {id:2,name:"Crucial 16GB DDR4-3200 SO-DIMM",store:"Takealot",price:749,typical:849,icon:"💾",tag:"Compatible",category:"ram",spec:"16GB • DDR4 • 3200 MT/s • SO-DIMM",compat:"ram",value:87},
@@ -40,10 +51,11 @@ function filtered(){
  else list.sort((a,b)=>dealScore(b)-dealScore(a));
  return list;
 }
-function search(q){
+async function search(q){
  state.query=(q||"").trim().toLowerCase();
  $("resultTitle").textContent=state.query?`Results for “${q.trim()}”`:"Popular deals";
- render(filtered());
+ const remote=state.query?await backendSearchV4(state.query):null;
+ if(remote){render(remote);}else{render(filtered());}
  document.querySelector(".section").scrollIntoView({behavior:"smooth",block:"start"});
 }
 $("searchBtn").onclick=()=>search($("searchInput").value);
