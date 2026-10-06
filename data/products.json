@@ -1,0 +1,5 @@
+[
+  {"canonical_name":"16GB DDR4-3200 SO-DIMM","category":"ram","specs":{"capacity_gb":16,"memory_type":"DDR4","speed_mts":3200,"form_factor":"SO-DIMM"}},
+  {"canonical_name":"1TB NVMe SSD","category":"ssd","specs":{"capacity_gb":1000,"interface":"NVMe","form_factor":"M.2"}},
+  {"canonical_name":"RTX 4060 8GB","category":"gpu","specs":{"memory_gb":8,"interface":"PCIe"}}
+]
