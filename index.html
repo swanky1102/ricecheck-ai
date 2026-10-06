@@ -3,59 +3,81 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>PriceCheck AI — South Africa</title>
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="description" content="PriceCheck AI — compare South African product prices, check compatibility and find better deals.">
+  <title>PriceCheck AI — Buy smarter. Pay less.</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><span>💰</span> PriceCheck <b>AI</b></div>
-  <nav><a href="#search">Search</a><a href="#saved">Saved</a><button id="scanNav">📷 Scan</button></nav>
+  <a class="brand" href="#search"><span>💰</span> PriceCheck <b>AI</b></a>
+  <nav><a href="#search">Search</a><a href="#saved">Saved <span id="savedBadge">0</span></a><button id="scanNav">📷 Scan</button></nav>
 </header>
 
 <main>
 <section class="hero" id="search">
   <div class="hero-copy">
-    <span class="pill">🇿🇦 South Africa • MVP</span>
+    <span class="pill">🇿🇦 South Africa • V2</span>
     <h1>Buy smarter.<br><em>Pay less.</em></h1>
-    <p>Compare prices, find compatible alternatives, and use AI to decide what you should actually buy.</p>
+    <p>Tell PriceCheck what you need. Compare products, spot the best value, and check compatibility before you buy.</p>
     <div class="searchbox">
-      <input id="searchInput" placeholder="Try “16GB DDR4 RAM under R800”" />
+      <input id="searchInput" aria-label="Search products" placeholder="Try “16GB DDR4 RAM under R800”">
       <button id="searchBtn">Search</button>
     </div>
     <div class="quick">
       <button data-q="16GB DDR4 RAM">16GB DDR4 RAM</button>
-      <button data-q="1TB NVMe SSD">1TB NVMe SSD</button>
+      <button data-q="1TB NVMe SSD under R1200">1TB NVMe SSD</button>
       <button data-q="RTX 4060">RTX 4060</button>
+      <button data-q="laptop RAM">Laptop RAM</button>
     </div>
   </div>
   <div class="hero-card">
     <div class="mini-label">AI DEAL CHECK</div>
     <div class="deal-price">R699</div>
     <div class="deal-title">16GB DDR4-3200 SO-DIMM</div>
-    <div class="deal-row"><span>Typical price</span><b>R849</b></div>
-    <div class="deal-row"><span>You save</span><b class="green">R150</b></div>
-    <div class="good">🟢 GOOD DEAL</div>
+    <div class="deal-row"><span>Demo typical price</span><b>R849</b></div>
+    <div class="deal-row"><span>Potential saving</span><b class="green">R150</b></div>
+    <div class="good">🟢 92/100 VALUE SCORE</div>
+    <small>Demo data — not a live quote</small>
   </div>
 </section>
 
 <section class="section">
-  <div class="section-head"><div><span class="eyebrow">RESULTS</span><h2 id="resultTitle">Popular deals</h2></div><span id="resultCount" class="muted"></span></div>
+  <div class="section-head">
+    <div><span class="eyebrow">COMPARE</span><h2 id="resultTitle">Popular deals</h2></div>
+    <span id="resultCount" class="muted"></span>
+  </div>
+  <div class="toolbar">
+    <div class="chips">
+      <button class="filter active" data-filter="all">All</button>
+      <button class="filter" data-filter="ram">RAM</button>
+      <button class="filter" data-filter="ssd">SSD</button>
+      <button class="filter" data-filter="gpu">GPU</button>
+    </div>
+    <select id="sortSelect" aria-label="Sort results">
+      <option value="value">Best value</option>
+      <option value="price-low">Lowest price</option>
+      <option value="price-high">Highest price</option>
+      <option value="name">Name</option>
+    </select>
+  </div>
   <div id="results" class="grid"></div>
+  <div id="emptyState" class="empty hidden">No exact demo matches. Try a broader search such as “DDR4”, “NVMe”, or “RTX 4060”.</div>
 </section>
 
 <section class="section scanner" id="scanner">
   <div class="scanner-copy">
     <span class="eyebrow">AI VISION</span>
     <h2>Scan a product.</h2>
-    <p>Take a photo of a product label or box. The MVP simulates AI identification and returns comparable products.</p>
+    <p>Upload a product photo or label. V2 prepares the result for product identification and comparison. Live vision requires a secure backend/API connection.</p>
     <button class="primary" id="scanBtn">📷 Scan Product</button>
     <input id="fileInput" type="file" accept="image/*" hidden>
     <div id="scanStatus" class="scan-status"></div>
   </div>
-  <div class="scan-demo">
-    <div class="camera">📷<span>Product camera</span></div>
+  <label class="scan-demo" id="dropZone">
+    <div class="camera">📷<span>Drop an image here<br>or click to choose</span></div>
     <div class="scan-line"></div>
-  </div>
+  </label>
 </section>
 
 <section class="section" id="saved">
@@ -64,18 +86,20 @@
 </section>
 </main>
 
-<div id="modal" class="modal hidden">
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
   <div class="modal-card">
-    <button class="close" id="closeModal">×</button>
+    <button class="close" id="closeModal" aria-label="Close">×</button>
     <span class="eyebrow">AI COMPATIBILITY CHECK</span>
     <h2 id="modalTitle">Will it work?</h2>
     <p id="modalText"></p>
-    <div class="compat">✓ Compatible with the selected device</div>
-    <button class="primary" id="modalSave">Save product</button>
+    <div id="compatBox" class="compat"></div>
+    <div class="modal-actions"><button class="secondary" id="closeModal2">Close</button><button class="primary" id="modalSave">Save product</button></div>
   </div>
 </div>
 
-<footer>PriceCheck AI MVP • Demo data only — connect live retailer feeds/APIs before production.</footer>
+<footer>
+  <strong>PriceCheck AI V2</strong> • Demo data only. Live retailer prices, AI vision and alerts require a backend and permitted retailer/API data sources.
+</footer>
 <script src="app.js"></script>
 </body>
 </html>
