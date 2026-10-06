@@ -1,4 +1,4 @@
-# PriceCheck AI V2
+# PriceCheck AI V3
 
 South Africa-focused price comparison MVP, published as a static site.
 
@@ -42,3 +42,10 @@ Open `index.html` in a browser, or serve the folder with any simple static HTTP 
 - V5: real AI vision and compatibility database
 - V6: accounts, alerts and price history
 - V7: affiliate links and retailer integrations
+
+
+## V3 foundation
+
+V3 is the backend-ready stage. The frontend remains deployable on GitHub Pages while a future secure API can provide live search results. Private AI keys and retailer credentials must remain server-side.
+
+Next: connect a database, permitted retailer feeds, secure AI query parsing, product vision, compatibility data, price history, and real alerts.
