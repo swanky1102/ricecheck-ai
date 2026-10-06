@@ -1,18 +1,31 @@
-# PriceCheck AI V3 API contract
+# PriceCheck AI API Contract
 
-## GET /api/search
+Base URL: Supabase Edge Functions deployment URL.
 
-Query: q=<plain-language shopping request>
+## Search
+`GET /search?q=<query>`
+Returns normalized product offers sorted by price.
 
-Example request: /api/search?q=16GB%20DDR4%20RAM%20under%20R800
+## Product identification
+`POST /identify-product`
+Accepts an image-identification request. Claude credentials remain server-side.
 
-Response JSON should contain:
-- query
-- products[]
-- generated_at
+## Compatibility
+`POST /compatibility`
+Accepts `{ device, product }` and returns advisory compatibility checks. It must not guarantee hardware compatibility.
 
-Each product should provide a normalized name, retailer, price in ZAR, category, specifications, availability state, and source URL.
+## Price history
+`GET /history?product_id=<uuid>`
+Returns offers and recorded price history.
 
-The server is responsible for query parsing, retailer feed access, product normalization, deal scoring, and stale-price handling.
+## Alerts
+`GET /alerts` — authenticated; returns the current user's alerts.
+`POST /alerts` — authenticated; body `{ product_id, target_price_zar }` creates an alert owned by the signed-in user.
+`DELETE /alerts?id=<uuid>` — authenticated; deletes only the signed-in user's alert.
 
-Future endpoints: product identification, compatibility checks, price history, and alerts.
+## Security requirements
+- Browser clients may use only the public Supabase publishable/anon key.
+- Supabase service-role/secret keys must stay server-side.
+- Alert routes require a valid Supabase Auth bearer token.
+- Database RLS remains the final authorization boundary.
+- Retailer credentials and private feeds must never be exposed to the browser.
