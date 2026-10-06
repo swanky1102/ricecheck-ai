@@ -2,13 +2,32 @@ async function backendSearchV4(q){
   const base=window.PRICECHECK_API_URL;
   if(!base)return null;
   try{
-    const r=await fetch(base+"?q="+encodeURIComponent(q));
+    const r=await fetch(base+"?q="+encodeURIComponent(q),{headers:{Accept:"application/json"}});
     if(!r.ok)throw new Error("API "+r.status);
     const d=await r.json();
     return Array.isArray(d.products)?d.products:null;
   }catch(e){return null;}
 }
-
+function normalizeRemoteProduct(p,index){
+  const price=Number(p.price||0);
+  return {
+    id:"remote:"+String(p.id||index),
+    backendId:p.id,
+    name:p.name||"Unknown product",
+    store:p.store||"Unknown retailer",
+    price,
+    typical:Number(p.typical||price),
+    icon:p.icon||"🛒",
+    tag:p.tag||(p.stale?"Price may be stale":"Backend offer"),
+    category:p.category||"other",
+    spec:p.spec||"Specifications unavailable",
+    compat:p.compat||p.category||"other",
+    value:Number(p.value||70),
+    url:p.url||"",
+    in_stock:p.in_stock,
+    stale:!!p.stale
+  };
+}
 const products=[
 {id:1,name:"SK hynix 16GB DDR4-3200 SO-DIMM",store:"Wootware",price:699,typical:849,icon:"🧠",tag:"Best value",category:"ram",spec:"16GB • DDR4 • 3200 MT/s • SO-DIMM",compat:"ram",value:92},
 {id:2,name:"Crucial 16GB DDR4-3200 SO-DIMM",store:"Takealot",price:749,typical:849,icon:"💾",tag:"Compatible",category:"ram",spec:"16GB • DDR4 • 3200 MT/s • SO-DIMM",compat:"ram",value:87},
@@ -55,7 +74,7 @@ async function search(q){
  state.query=(q||"").trim().toLowerCase();
  $("resultTitle").textContent=state.query?`Results for “${q.trim()}”`:"Popular deals";
  const remote=state.query?await backendSearchV4(state.query):null;
- if(remote){render(remote);}else{render(filtered());}
+ if(remote){render(remote.map(normalizeRemoteProduct));}else{render(filtered());}
  document.querySelector(".section").scrollIntoView({behavior:"smooth",block:"start"});
 }
 $("searchBtn").onclick=()=>search($("searchInput").value);
