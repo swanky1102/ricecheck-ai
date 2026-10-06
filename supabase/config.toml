@@ -1,0 +1,5 @@
+# PriceCheck AI Supabase configuration
+project_id = ""
+
+[functions.search]
+verify_jwt = false
