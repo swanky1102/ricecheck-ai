@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { searchRetailers } from "./retailers.ts";
+import { understand, think } from "./brain.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -67,24 +68,24 @@ Deno.serve(async (req) => {
     if (!query) return json({ query: "", products: [], generated_at: new Date().toISOString() });
 
     const liveOffers = await searchRetailers(query);
-    const qWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !/^(under|below|less|than|with|for|the|price|max|maximum|up|to)$/.test(w));
-    const priceMatch = query.match(/(?:under|below|less than|max(?:imum)?(?: price)?|up to)\s*r?\s*([\d\s,.]+)/i);
-    const priceCeiling = priceMatch ? Number(priceMatch[1].replace(/[\s,]/g, "")) : null;
+    const intent = understand(query);
+    const qWords = intent.tokens;
     const liveProducts = liveOffers
       .filter((offer: any) => {
         const haystack = [offer.name, offer.brand, offer.model, offer.category, offer.spec].join(" ").toLowerCase();
         return (qWords.length === 0 || qWords.some(w => haystack.includes(w)));
       })
       .map(normalizeLive)
-      .filter((p: any) => Number.isFinite(p.price) && p.price >= 0 && (!Number.isFinite(priceCeiling) || p.price <= priceCeiling));
+      .filter((p: any) => Number.isFinite(p.price) && p.price >= 0);
 
     if (liveProducts.length) {
-      liveProducts.sort((a: any, b: any) => a.price - b.price);
+      const decisions = think(liveProducts, intent);
       return json({
         query,
-        products: liveProducts,
+        products: decisions.map((d: any) => ({ ...d.product, offers: d.offers, retailer_count: d.retailer_count, confidence: d.confidence, savings_vs_next: d.savings_vs_next })),
         generated_at: new Date().toISOString(),
         source: "retailers",
+        brain: { intent, matched_products: decisions.length },
         retailer_count: new Set(liveProducts.map((p: any) => p.store)).size
       });
     }
@@ -96,7 +97,7 @@ Deno.serve(async (req) => {
     if (!supabaseUrl || !publishableKey) return json({ query, products: [], generated_at: new Date().toISOString(), source: "retailers", message: "No live retailer connector returned results." });
 
     const supabase = createClient(supabaseUrl, publishableKey);
-    const category = categoryFor(query);
+    const category = intent.category;
     let productQuery = supabase.from("products")
       .select("id, canonical_name, brand, model, category, specs, offers(id, price_zar, url, in_stock, last_seen_at, retailer:retailers(name))")
       .limit(50);
@@ -108,7 +109,7 @@ Deno.serve(async (req) => {
       const haystack = [p.canonical_name, p.brand, p.model, p.category, specText(p.specs || {})].join(" ").toLowerCase();
       if (qWords.length && !qWords.some(w => haystack.includes(w))) return null;
       const price = Number(offer.price_zar);
-      if (Number.isFinite(priceCeiling) && price > priceCeiling) return null;
+      if (intent.price_ceiling != null && price > intent.price_ceiling) return null;
       return {
         id: offer.id, product_id: p.id, name: p.canonical_name, store: offer.retailer?.name || "Database",
         price, typical: price, icon: iconFor(p.category), tag: "Demo database offer",
