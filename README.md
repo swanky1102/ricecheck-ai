@@ -18,8 +18,30 @@ South Africa-focused price comparison app with a static frontend and a Supabase 
 - No private API/database secrets in browser code
 - GitHub Actions JavaScript syntax validation
 
-## Live-data boundary
-Demo prices are not live retailer quotes. Real South African prices must come from retailer APIs, feeds, affiliate/developer programs, or another source that permits the intended use.
+## Live retailer architecture
+The `/search` Edge Function now has a modular retailer connector layer. It can consume permitted retailer JSON feeds and an optional Takealot connector through ReefAPI. Every connector is server-side; retailer/API credentials never go into the browser.
+
+Supported connector slots are prepared for: Takealot, Makro, Game, Woolworths, Checkers, Shoprite, Pick n Pay, Incredible Connection, Computer Mania, HiFi Corp, Loot, Wootware and Evetech. Adding a retailer is a connector/configuration change rather than a frontend rewrite.
+
+### Connector configuration
+Set server-side Supabase Edge Function secrets for any feeds you are authorized to use:
+- `REEFAPI_KEY` for the Takealot read connector.
+- `MAKRO_FEED_URL`
+- `GAME_FEED_URL`
+- `WOOLWORTHS_FEED_URL`
+- `CHECKERS_FEED_URL`
+- `SHOPRITE_FEED_URL`
+- `PICKNPAY_FEED_URL`
+- `INCREDIBLE_FEED_URL`
+- `COMPUTERMANIA_FEED_URL`
+- `HIFICORP_FEED_URL`
+- `LOOT_FEED_URL`
+- `WOOTWARE_FEED_URL`
+- `EVETECH_FEED_URL`
+
+Only use feeds/APIs whose terms permit price/product-data aggregation and linking. Do not scrape behind authentication or bypass retailer controls.
+
+Live results take priority. The existing Supabase demo catalog is retained only as a clearly labelled fallback until live connectors are configured.
 
 Never put an Anthropic API key, Supabase service-role/secret key, retailer credential, or other private credential in frontend code.
 
