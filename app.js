@@ -165,35 +165,28 @@ function sorted(list){
   return out;
 }
 
-function render(list=state.results){
-  const visible=sorted(applyPriceLimit(list)).filter(p=>state.filter==="all" || p.category===state.filter);
-  $("results").innerHTML=visible.map(p=>{
-    const saved=state.saved.includes(p.id);
-    const pct=p.typical>0?Math.max(8,Math.min(100,Math.round((p.typical-p.price)/p.typical*100))):8;
-    const stock=p.in_stock===false?"Out of stock":p.stale?"Price may be stale":(apiBase()?"Backend offer":"Demo availability");
-    return `<article class="card">
-      <div class="thumb">${escapeHtml(p.icon)}</div>
-      <span class="score">${dealScore(p)}/100</span>
-      <h3>${escapeHtml(p.name)}</h3>
-      <div class="store">${escapeHtml(p.store)} • ${escapeHtml(stock)}</div>
-      <div class="price">${money(p.price)}</div>
-      <span class="tag">✓ ${escapeHtml(p.recommendation || p.tag)}</span>\n      <div class="brain-line">${p.identity==="verified"?"✓ Verified product match":"◌ AI product match"}${p.confidence?` • ${Math.round(p.confidence)}% confidence`:""}${p.savings_vs_next>0?` • Save ${money(p.savings_vs_next)} vs next`:""}</div>
-      <div class="store" style="margin-top:10px">${escapeHtml(p.spec)}</div>
-      <div class="history">Price position • reference ${money(p.typical)}
-        <div class="bar"><i style="width:${pct}%"></i></div>
-      </div>
-      <div class="card-actions">
-        <button onclick="compatById('${escapeHtml(p.id)}')">Check fit</button>
-        <button onclick="historyById('${escapeHtml(p.id)}')">History</button>
-        <button class="buy ${saved?"saved":""}" onclick="toggleSave('${escapeHtml(p.id)}')">${saved?"✓ Saved":"Save"}</button>
-      </div>
-      ${p.url?'<a class="offer-link" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(p.url)+'">View offer ↗</a>':""}
-    </article>`;
-  }).join("");
-  $("resultCount").textContent=visible.length+" results";
-  $("emptyState").classList.toggle("hidden",visible.length>0);
+function renderShoppingCard(p){
+  const saved=state.saved.includes(p.id);
+  const offers=(p.offers||[]).length?[...p.offers].sort((a,b)=>Number(a.price)-Number(b.price)):[p];
+  const best=offers[0]||p;
+  const bestPrice=Number(best.price||0);
+  const next=offers.length>1?Number(offers[1].price):0;
+  const saving=next>bestPrice?next-bestPrice:Number(p.savings_vs_next||0);
+  const productName=escapeHtml(p.name||'Product');
+  const buy=best.url||p.url||'';
+  const rows=offers.map((o,n)=>'<div class="offer-row"><div class="offer-store"><span class="rank">'+(n===0?'★':n+1)+'</span><div><b>'+escapeHtml(o.store||'Shop')+'</b><small>'+(o.in_stock===false?'Out of stock':o.stale?'Price may be stale':'Available')+'</small></div></div><strong>'+money(o.price)+'</strong>'+(o.url?'<a class="offer-buy" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(o.url)+'">'+(n===0?'Best price':'View shop')+' ↗</a>':'')+'</div>').join('');
+  return '<article class="shop-card"><div class="shop-head"><div class="thumb">'+escapeHtml(p.icon||'🛒')+'</div><div class="shop-title"><div class="eyebrow">'+escapeHtml(p.brand||p.category||'Product')+' • '+(p.identity==='verified'?'✓ Verified match':'AI match')+'</div><h3>'+productName+'</h3><div class="shop-spec">'+escapeHtml(p.spec||'')+'</div></div><span class="score">'+Math.round(Number(p.deal_score||dealScore(p)))+'/100</span></div>'
+    +'<div class="best-deal"><div><span class="mini-label">BEST PRICE</span><strong>'+money(bestPrice)+'</strong><small>'+escapeHtml(best.store||p.store||'Shop')+' • '+(best.in_stock===false?'Out of stock':'Available')+'</small></div><div class="best-meta"><b>'+escapeHtml(p.recommendation||'Best price found')+'</b>'+(saving>0?'<span>Save '+money(saving)+' vs next price</span>':'')+'</div>'+(buy?'<a class="buy-now" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(buy)+'">Buy at '+escapeHtml(best.store||'shop')+' ↗</a>':'')+'</div>'
+    +'<div class="offer-title"><b>Compare shops</b><span>'+offers.length+' price'+(offers.length===1?'':'s')+'</span></div><div class="offers">'+rows+'</div>'
+    +'<div class="shop-actions"><button onclick="compatById(\''+escapeHtml(p.id)+'\')">Check fit</button><button onclick="historyById(\''+escapeHtml(p.id)+'\')">Price history</button><button onclick="toggleSave(\''+escapeHtml(p.id)+'\')">'+(saved?'✓ Saved':'♡ Save')+'</button></div>'
+    +'<div class="confidence">'+(p.confidence?'AI match confidence <b>'+Math.round(p.confidence)+'%</b>':'')+(p.savings_vs_next>0?'<span>Next price '+money(bestPrice+Number(p.savings_vs_next))+'</span>':'')+'</div></article>';
 }
-
+function render(list=state.results){
+  const visible=sorted(applyPriceLimit(list)).filter(p=>state.filter==='all'||p.category===state.filter);
+  $('results').innerHTML=visible.map(renderShoppingCard).join('');
+  $('resultCount').textContent=visible.length+' product'+(visible.length===1?'':'s')+' found';
+  $('emptyState').classList.toggle('hidden',visible.length>0);
+}
 function findProduct(id){return state.results.find(p=>p.id===id)||DEMO_PRODUCTS.find(p=>p.id===id)}
 
 function toggleSave(id){
