@@ -233,7 +233,7 @@ $("closeModal2").onclick=closeModal;
 
 async function search(q){
   state.query=(q||"").trim();
-  $("resultTitle").textContent=state.query?\`Results for “${state.query}”\`:"Popular deals";
+  $("resultTitle").textContent=state.query?`Results for “${state.query}”`:"Popular deals";
   $("scanStatus").textContent="";
   if(state.query && apiBase()){
     $("resultCount").textContent="Searching…";
