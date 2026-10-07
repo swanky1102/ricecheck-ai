@@ -51,6 +51,28 @@ function similarity(a: any, b: any) {
   return inter / Math.max(1, Math.min(at.size, bt.size));
 }
 
+
+function dealScore(item: any) {
+  const offers = item.offers || [];
+  if (!offers.length) return 0;
+  const prices = offers.map((o:any)=>Number(o.price)).filter(Number.isFinite);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const priceScore = max > min ? 100 - ((Number(item.product.price)-min)/(max-min))*35 : 85;
+  const stockScore = item.product.in_stock === false ? 0 : 20;
+  const freshScore = item.product.stale ? 0 : 15;
+  const confidenceScore = Number(item.confidence || 0) * 0.15;
+  return Math.max(0, Math.min(100, Math.round(priceScore*0.5 + stockScore + freshScore + confidenceScore)));
+}
+
+function recommendation(item: any) {
+  const best = item.product;
+  if (best.in_stock === false) return "Unavailable";
+  if (item.identity === "verified" && item.retailer_count >= 2) return "Best verified deal";
+  if (item.retailer_count >= 2) return "Best compared deal";
+  return "Lowest found";
+}
+
 export function think(offers: any[], intent: BrainIntent) {
   const eligible = offers.filter(o => Number.isFinite(Number(o.price)) && Number(o.price) >= 0 &&
     (intent.price_ceiling == null || Number(o.price) <= intent.price_ceiling));
@@ -67,10 +89,14 @@ export function think(offers: any[], intent: BrainIntent) {
     const freshness = group.offers.reduce((s: number,o: any)=>s + (o.stale ? 0 : 1), 0) / group.offers.length;
     const stock = best.in_stock === false ? 0 : 1;
     const confidence = Math.min(100, Math.round(50 + Math.min(25, retailerCount*8) + freshness*15 + stock*10));
-    return { product: best, offers: group.offers, retailer_count: retailerCount, confidence, identity: identifier(best) ? "verified" : "inferred",
+    const identity = identifier(best) ? "verified" : "inferred";
+    const item = { product: best, offers: group.offers, retailer_count: retailerCount, confidence, identity,
       savings_vs_next: group.offers.length > 1 ? Number(group.offers[1].price)-Number(best.price) : null };
+    item.deal_score = dealScore(item);
+    item.recommendation = recommendation(item);
+    return item;
   });
-  scored.sort((a,b) => Number(a.product.price)-Number(b.product.price));
+  scored.sort((a,b) => b.deal_score - a.deal_score || Number(a.product.price)-Number(b.product.price));
   return scored;
 }
 
