@@ -97,7 +97,7 @@ renderAuth();
 
 function normalizeProduct(p,index){
   return {
-    id:String(p.id ?? "remote-"+index),
+    id:String(p.id ?? p.product_id ?? "remote-"+index),
     product_id:String(p.product_id ?? p.productId ?? p.id ?? ""),
     name:p.name || "Unknown product",
     store:p.store || "Unknown retailer",
@@ -112,7 +112,13 @@ function normalizeProduct(p,index){
     url:p.url || "",
     in_stock:p.in_stock,
     stale:Boolean(p.stale),
-    source:p.source || "backend"
+    source:p.source || "backend",
+    identity:p.identity || "inferred",
+    deal_score:Number(p.deal_score ?? p.value ?? 70),
+    recommendation:p.recommendation || (p.identity==="verified" ? "Best verified deal" : "Best compared deal"),
+    confidence:Number(p.confidence || 0),
+    savings_vs_next:Number(p.savings_vs_next || 0),
+    offers:Array.isArray(p.offers)?p.offers:[]
   };
 }
 
@@ -155,7 +161,7 @@ function sorted(list){
   if(state.sort==="price-low") out.sort((a,b)=>a.price-b.price);
   else if(state.sort==="price-high") out.sort((a,b)=>b.price-a.price);
   else if(state.sort==="name") out.sort((a,b)=>a.name.localeCompare(b.name));
-  else out.sort((a,b)=>dealScore(b)-dealScore(a));
+  else out.sort((a,b)=>(Number(b.deal_score||dealScore(b))-Number(a.deal_score||dealScore(a))) || (a.price-b.price));
   return out;
 }
 
@@ -171,7 +177,7 @@ function render(list=state.results){
       <h3>${escapeHtml(p.name)}</h3>
       <div class="store">${escapeHtml(p.store)} • ${escapeHtml(stock)}</div>
       <div class="price">${money(p.price)}</div>
-      <span class="tag">✓ ${escapeHtml(p.tag)}</span>
+      <span class="tag">✓ ${escapeHtml(p.recommendation || p.tag)}</span>\n      <div class="brain-line">${p.identity==="verified"?"✓ Verified product match":"◌ AI product match"}${p.confidence?` • ${Math.round(p.confidence)}% confidence`:""}${p.savings_vs_next>0?` • Save ${money(p.savings_vs_next)} vs next`:""}</div>
       <div class="store" style="margin-top:10px">${escapeHtml(p.spec)}</div>
       <div class="history">Price position • reference ${money(p.typical)}
         <div class="bar"><i style="width:${pct}%"></i></div>
