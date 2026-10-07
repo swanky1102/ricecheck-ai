@@ -17,7 +17,7 @@
 <main>
 <section class="hero" id="search">
   <div class="hero-copy">
-    <span class="pill">🇿🇦 South Africa • Production</span>
+    <span class="pill">🇿🇦 South Africa • Live comparison</span>
     <h1>Buy smarter.<br><em>Pay less.</em></h1>
     <p>Tell PriceCheck what you need. Compare products, spot the best value, and check compatibility before you buy.</p>
     <div class="searchbox">
@@ -35,10 +35,10 @@
     <div class="mini-label">AI DEAL CHECK</div>
     <div class="deal-price">R699</div>
     <div class="deal-title">16GB DDR4-3200 SO-DIMM</div>
-    <div class="deal-row"><span>Demo typical price</span><b>R849</b></div>
+    <div class="deal-row"><span>Reference price</span><b>R849</b></div>
     <div class="deal-row"><span>Potential saving</span><b class="green">R150</b></div>
     <div class="good">🟢 92/100 VALUE SCORE</div>
-    <small>Demo data — not a live quote</small>
+    <small>Live retailer data appears when a permitted feed/API is connected</small>
   </div>
 </section>
 
@@ -52,7 +52,7 @@
       <button class="filter active" data-filter="all">All</button>
       <button class="filter" data-filter="ram">RAM</button>
       <button class="filter" data-filter="ssd">SSD</button>
-      <button class="filter" data-filter="gpu">GPU</button>
+      <button class="filter" data-filter="gpu">GPU</button><button class="filter" data-filter="cpu">CPU</button><button class="filter" data-filter="laptop">Laptops</button><button class="filter" data-filter="phone">Phones</button><button class="filter" data-filter="tv">TVs</button>
     </div>
     <select id="sortSelect" aria-label="Sort results">
       <option value="value">Best value</option>
@@ -62,7 +62,7 @@
     </select>
   </div>
   <div id="results" class="grid"></div>
-  <div id="emptyState" class="empty hidden">No exact demo matches. Try a broader search such as “DDR4”, “NVMe”, or “RTX 4060”.</div>
+  <div id="emptyState" class="empty hidden">No matching live offers were returned. Try a broader product search or connect a permitted retailer feed/API.</div>
 </section>
 
 <section class="section scanner" id="scanner">
@@ -109,7 +109,7 @@
 </section>
 
 <footer>
-  <strong>PriceCheck AI Production</strong> • Demo data only. Live retailer prices, AI vision and alerts require a backend and permitted retailer/API data sources.
+  <strong>PriceCheck AI</strong> • Live results require permitted retailer/API data sources. Demo fallback is clearly labelled.
 </footer>
 <script src="backend-config.js"></script><script src="app.js"></script>
 </body>
