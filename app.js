@@ -343,9 +343,10 @@ async function prepareScanImage(file){
   $("scanStatus").textContent="🔎 Preparing secure identification…";
   if(apiBase()){
     try{
+      const prepared=await prepareScanImage(file);
       const data=await fetch(fnUrl("identify-product"),{
         method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({image_base64: (await prepareScanImage(file)).base64, media_type: (await prepareScanImage(file)).mediaType})
+        body:JSON.stringify({image_base64:prepared.base64,media_type:prepared.mediaType})
       }).then(r=>r.json());
       const identified=data?.product || parseVisionResult(data?.result);\n      if(identified?.name){\n        const label=[identified.brand,identified.model,identified.name].filter(Boolean).join(" ").replace(/\\s+/g," ").trim();\n        $("scanStatus").textContent="✓ Identified: "+label;\n        $("searchInput").value=label;\n        search(label);\n        return;\n      }
     }catch(_){}
