@@ -51,6 +51,41 @@ function normalizeGenericItem(item: any, retailer: string, source: string): Norm
   };
 }
 
+async function awinFeed(url: string, retailer: string) {
+  const response = await fetch(url, { headers: { Accept: "application/json, text/csv, text/plain" } });
+  if (!response.ok) throw new Error(retailer + " Awin feed returned HTTP " + response.status);
+  const text = await response.text();
+  const lines = text.split(/\\r?\\n/).map((line) => line.trim()).filter(Boolean);
+  const offers: NormalizedOffer[] = [];
+  for (const line of lines) {
+    try {
+      const item = JSON.parse(line);
+      if (item.error) continue;
+      const basic = item.product_basic ?? item.product ?? item;
+      const detail = item.product_details ?? {};
+      const merged = { ...basic, ...detail };
+      const offer = normalizeGenericItem({
+        id: merged.id ?? merged.aw_product_id ?? merged.merchant_product_id,
+        name: merged.title ?? merged.product_name ?? merged.name,
+        price: merged.price ?? merged.search_price ?? merged.sale_price ?? merged.store_price,
+        url: merged.aw_deep_link ?? merged.merchant_deep_link ?? merged.link,
+        image: merged.merchant_image_url ?? merged.large_image ?? merged.image_url,
+        brand: merged.brand_name ?? merged.brand,
+        model: merged.product_model ?? merged.model_number ?? merged.mpn,
+        category: merged.category_name ?? merged.merchant_category,
+        description: merged.description ?? merged.product_short_description,
+        in_stock: merged.in_stock ?? merged.stock_status,
+        gtin: merged.product_GTIN ?? merged.ean ?? merged.upc,
+        mpn: merged.mpn
+      }, retailer, "awin");
+      if (offer) offers.push(offer);
+    } catch (_) {
+      // Ignore malformed/non-product lines so one bad record does not kill a feed.
+    }
+  }
+  return offers;
+}
+
 async function jsonFeed(url: string, retailer: string) {
   const response = await fetch(url, { headers: { Accept: "application/json" } });
   if (!response.ok) throw new Error(retailer + " feed returned HTTP " + response.status);
@@ -94,6 +129,13 @@ export async function searchRetailers(query: string) {
     ["Wootware", Deno.env.get("WOOTWARE_FEED_URL")],
     ["Evetech", Deno.env.get("EVETECH_FEED_URL")]
   ] as const;
+
+  const awinFeeds = [
+    ["Awin", Deno.env.get("AWIN_FEED_URL")]
+  ] as const;
+  for (const [retailer, url] of awinFeeds) {
+    if (url) jobs.push(awinFeed(url, retailer).catch(() => []));
+  }
 
   for (const [retailer, url] of configuredFeeds) {
     if (url) jobs.push(jsonFeed(url, retailer).catch(() => []));
