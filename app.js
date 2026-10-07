@@ -21,6 +21,9 @@ const $ = id => document.getElementById(id);
 const money = n => "R" + Number(n || 0).toLocaleString("en-ZA",{minimumFractionDigits:0,maximumFractionDigits:2});
 const apiBase = () => String(window.PRICECHECK_API_URL || "").replace(/\/$/,"");
 
+// PRICECHECK_API_URL points at /search. All sibling Edge Functions are derived from it.
+const fnUrl = name => apiBase().replace(/\/search$/,"/"+String(name).replace(/^\//,""));
+
 function escapeHtml(value){
   return String(value ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 }
@@ -154,9 +157,9 @@ async function setAlertById(id){
     try{
       const token=window.PRICECHECK_SUPABASE_ACCESS_TOKEN || "";
       if(!token) throw new Error("Sign in is required before creating a server alert.");
-      const r=await fetch(base.replace(/\/search$/,"/alerts"),{
+      const r=await fetch(fnUrl("alerts"),{
         method:"POST",
-        headers:{"Content-Type":"application/json","Authorization:"Bearer "+token},
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
         body:JSON.stringify({product_id:p.product_id||p.id,target_price_zar:target})
       });
       const d=await r.json();
@@ -179,11 +182,22 @@ async function historyById(id){
     return;
   }
   try{
-    const d=await backendGet("/history?product_id="+encodeURIComponent(p.product_id));
+    const d=await backendGetSibling("history","?product_id="+encodeURIComponent(p.product_id));
     const rows=(d.offers||[]).flatMap(o=>o.price_history||[]).sort((a,b)=>new Date(a.recorded_at)-new Date(b.recorded_at));
     if(!rows.length){alert("No price history has been recorded for this product yet.");return;}
     alert(rows.slice(-10).map(x=>new Date(x.recorded_at).toLocaleDateString("en-ZA")+" — "+money(x.price_zar)).join("\n"));
-  }catch(e){alert("Could not load price history.");}
+  }catch(e){alert("Could not load price history: "+e.message);}
+}
+
+async function backendGetSibling(name,path=""){
+  const url=fnUrl(name)+path;
+  if(!apiBase()) return null;
+  const r=await fetch(url,{headers:{Accept:"application/json"}});
+  const text=await r.text();
+  let data=null;
+  try{data=text?JSON.parse(text):null}catch(_){data={error:text||"Invalid API response"}}
+  if(!r.ok) throw new Error(data?.error||("API "+r.status));
+  return data;
 }
 
 async function compatById(id){
@@ -197,12 +211,19 @@ async function compatById(id){
   $("modal").classList.remove("hidden");
   if(apiBase() && p.product_id && !p.product_id.startsWith("demo-")){
     try{
-      const data=await fetch(apiBase().replace(/\/search$/,"/compatibility"),{
+      const r=await fetch(fnUrl("compatibility"),{
         method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({product:{id:p.product_id,name:p.name,category:p.category,spec:p.spec}})
-      }).then(r=>r.json());
+      });
+      const text=await r.text();
+      let data=null;
+      try{data=text?JSON.parse(text):null}catch(_){data={error:text||"Invalid API response"}}
+      if(!r.ok) throw new Error(data?.error||("API "+r.status));
       if(data?.summary) $("modalText").textContent=data.summary;
-    }catch(_){}
+    }catch(e){
+      $("compatBox").className="compat warn";
+      $("compatBox").textContent="Compatibility service unavailable: "+e.message;
+    }
   }
 }
 
@@ -212,7 +233,7 @@ $("closeModal2").onclick=closeModal;
 
 async function search(q){
   state.query=(q||"").trim();
-  $("resultTitle").textContent=state.query?`Results for “${state.query}”`:"Popular deals";
+  $("resultTitle").textContent=state.query?\`Results for “${state.query}”\`:"Popular deals";
   $("scanStatus").textContent="";
   if(state.query && apiBase()){
     $("resultCount").textContent="Searching…";
@@ -256,7 +277,7 @@ async function processScan(file){
   $("scanStatus").textContent="🔎 Preparing secure identification…";
   if(apiBase()){
     try{
-      const data=await fetch(apiBase().replace(/\/search$/,"/identify-product"),{
+      const data=await fetch(fnUrl("identify-product"),{
         method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({image_name:file.name})
       }).then(r=>r.json());
