@@ -219,8 +219,7 @@ async function setAlertById(id){
         body:JSON.stringify({product_id:p.product_id||p.id,target_price_zar:target})
       });
       const d=await r.json();
-      if(!r.ok) throw new Error(d.error||"Alert failed");
-      alert("Price alert created.");
+      if(!r.ok) throw new Error(d.error||"Alert failed");\n      if(d.alert){state.alerts=[d.alert,...state.alerts.filter(a=>a.id!==d.alert.id)];saveLocal()}\n      alert("Price alert created.");
       return;
     }catch(e){alert(e.message+" Local demo alert was saved instead.");}
   }
@@ -283,7 +282,7 @@ async function compatById(id){
   }
 }
 
-function closeModal(){$("modal").classList.add("hidden")}
+function parseVisionResult(result){const blocks=Array.isArray(result?.content)?result.content:[];const text=blocks.map(x=>x?.text||"").join("\n").trim();if(!text)return null;try{return JSON.parse(text)}catch(_){const m=text.match(/\{[\s\S]*\}/);if(!m)return null;try{return JSON.parse(m[0])}catch(_){return null}}}\n\nfunction closeModal(){$("modal").classList.add("hidden")}
 $("closeModal").onclick=closeModal;
 $("closeModal2").onclick=closeModal;
 
@@ -328,21 +327,16 @@ dropZone.onclick=startScan;
 dropZone.addEventListener("drop",e=>{const file=e.dataTransfer.files[0];if(file)processScan(file)});
 fileInput.onchange=()=>{if(fileInput.files[0])processScan(fileInput.files[0])};
 
-async function processScan(file){
+function fileToBase64(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>{const value=String(reader.result||"");resolve(value.includes(",")?value.split(",")[1]:value)};reader.onerror=()=>reject(new Error("Could not read image"));reader.readAsDataURL(file)})}\n\nasync function processScan(file){
   if(!file.type.startsWith("image/")){alert("Please choose an image file.");return}
   $("scanStatus").textContent="🔎 Preparing secure identification…";
   if(apiBase()){
     try{
       const data=await fetch(fnUrl("identify-product"),{
         method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({image_name:file.name})
+        body:JSON.stringify({image_base64: await fileToBase64(file), media_type:file.type || "image/jpeg"})
       }).then(r=>r.json());
-      if(data?.product?.name){
-        $("scanStatus").textContent="✓ "+data.product.name;
-        $("searchInput").value=data.product.name;
-        search(data.product.name);
-        return;
-      }
+      const identified=data?.product || parseVisionResult(data?.result);\n      if(identified?.name){\n        const label=[identified.brand,identified.model,identified.name].filter(Boolean).join(" ").replace(/\\s+/g," ").trim();\n        $("scanStatus").textContent="✓ Identified: "+label;\n        $("searchInput").value=label;\n        search(label);\n        return;\n      }
     }catch(_){}
   }
   $("scanStatus").innerHTML="<b>Demo identification:</b> 16GB DDR4-3200 SO-DIMM. Connect the secure vision backend for real image identification.";
