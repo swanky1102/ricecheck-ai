@@ -11,7 +11,7 @@ const state = {
   query:"",
   filter:"all",
   sort:"value",
-  results:[...DEMO_PRODUCTS],
+  results:[],
   saved:JSON.parse(localStorage.getItem("pc_saved_v3") || "[]"),
   alerts:JSON.parse(localStorage.getItem("pc_alerts_v3") || "[]")
 };
@@ -183,6 +183,8 @@ function renderShoppingCard(p){
 }
 function render(list=state.results){
   const visible=sorted(applyPriceLimit(list)).filter(p=>state.filter==='all'||p.category===state.filter);
+  const hasLive=visible.some(p=>p.source==="retailers" || (p.offers||[]).some(o=>o.source==="retailers" || o.source==="awin"));
+  $("liveStatus")?.classList.toggle("hidden", hasLive || visible.length===0);
   $('results').innerHTML=visible.map(renderShoppingCard).join('');
   $('resultCount').textContent=visible.length+' product'+(visible.length===1?'':'s')+' found';
   $('emptyState').classList.toggle('hidden',visible.length>0);
@@ -312,12 +314,12 @@ async function search(q){
       state.results=remote;
       render(state.results);
     }catch(e){
-      state.results=localSearch();
+      state.results=[];
       render(state.results);
-      $("resultCount").textContent=state.results.length+" demo results • backend unavailable";
+      $("resultCount").textContent="Live search unavailable";
     }
   }else{
-    state.results=localSearch();
+    state.results=[];
     render(state.results);
   }
   document.querySelector(".section").scrollIntoView({behavior:"smooth",block:"start"});
