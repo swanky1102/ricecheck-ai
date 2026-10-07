@@ -11,7 +11,7 @@
 <body>
 <header class="topbar">
   <a class="brand" href="#search"><span>💰</span> PriceCheck <b>AI</b></a>
-  <nav><a href="#search">Search</a><a href="#saved">Saved <span id="savedBadge">0</span></a><button id="scanNav">📷 Scan</button></nav>
+  <nav><a href="#search">Search</a><a href="#saved">Saved <span id="savedBadge">0</span></a><button id="scanNav">📷 Scan</button><button id="accountBtn">👤 Account</button></nav>
 </header>
 
 <main>
@@ -96,6 +96,17 @@
     <div class="modal-actions"><button class="secondary" id="closeModal2">Close</button><button class="primary" id="modalSave">Save product</button></div>
   </div>
 </div>
+
+<section class="auth-section" id="account">
+  <div class="auth-card">
+    <div><span class="eyebrow">YOUR ACCOUNT</span><h2 id="authTitle">Sign in to PriceCheck AI</h2><p id="authStatus">Create an account to sync price alerts securely.</p></div>
+    <div class="auth-fields">
+      <input id="authEmail" type="email" autocomplete="email" placeholder="Email address">
+      <input id="authPassword" type="password" autocomplete="current-password" placeholder="Password">
+      <div class="auth-actions"><button class="primary" id="signInBtn">Sign in</button><button class="secondary" id="signUpBtn">Create account</button><button class="secondary hidden" id="signOutBtn">Sign out</button></div>
+    </div>
+  </div>
+</section>
 
 <footer>
   <strong>PriceCheck AI Production</strong> • Demo data only. Live retailer prices, AI vision and alerts require a backend and permitted retailer/API data sources.
