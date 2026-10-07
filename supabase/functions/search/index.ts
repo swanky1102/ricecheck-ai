@@ -105,6 +105,7 @@ Deno.serve(async (req) => {
     const products = (data || []).flatMap((p: any) => (p.offers || []).map((offer: any) => {
       const haystack = [p.canonical_name, p.brand, p.model, p.category, specText(p.specs || {})].join(" ").toLowerCase();
       if (qWords.length && !qWords.some(w => haystack.includes(w))) return null;
+      if (Number.isFinite(priceCeiling) && price > priceCeiling) return null;
       const price = Number(offer.price_zar);
       return {
         id: offer.id, product_id: p.id, name: p.canonical_name, store: offer.retailer?.name || "Database",
