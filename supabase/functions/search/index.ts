@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
       const decisions = think(liveProducts, intent);
       return json({
         query,
-        products: decisions.map((d: any) => ({ ...d.product, offers: d.offers, retailer_count: d.retailer_count, confidence: d.confidence, savings_vs_next: d.savings_vs_next })),
+        products: decisions.map((d: any) => ({ ...d.product, offers: d.offers, retailer_count: d.retailer_count, confidence: d.confidence, identity: d.identity, deal_score: d.deal_score, recommendation: d.recommendation, savings_vs_next: d.savings_vs_next })),
         generated_at: new Date().toISOString(),
         source: "retailers",
         brain: { intent, matched_products: decisions.length },
