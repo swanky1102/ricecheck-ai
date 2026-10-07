@@ -46,7 +46,16 @@ Deno.serve(async (req) => {
 
     if (!response.ok) return json({ error: "Vision provider request failed." }, 502);
     const result = await response.json();
-    return json({ mode: "ai", result, generated_at: new Date().toISOString() });
+    const text = (result?.content || []).map((block: any) => block?.text || "").join("\n").trim();
+    let product: any = null;
+    try {
+      product = JSON.parse(text);
+    } catch (_) {
+      const match = text.match(/\\{[\\s\\S]*\\}/);
+      if (match) { try { product = JSON.parse(match[0]); } catch (_) {} }
+    }
+    if (!product?.name) return json({ mode: "ai", error: "Vision response did not contain a usable product.", result }, 502);
+    return json({ mode: "ai", product, generated_at: new Date().toISOString() });
   } catch {
     return json({ error: "Invalid image request." }, 400);
   }
