@@ -327,14 +327,25 @@ dropZone.onclick=startScan;
 dropZone.addEventListener("drop",e=>{const file=e.dataTransfer.files[0];if(file)processScan(file)});
 fileInput.onchange=()=>{if(fileInput.files[0])processScan(fileInput.files[0])};
 
-function fileToBase64(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>{const value=String(reader.result||"");resolve(value.includes(",")?value.split(",")[1]:value)};reader.onerror=()=>reject(new Error("Could not read image"));reader.readAsDataURL(file)})}\n\nasync function processScan(file){
+function fileToBase64(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>{const value=String(reader.result||"");resolve(value.includes(",")?value.split(",")[1]:value)};reader.onerror=()=>reject(new Error("Could not read image"));reader.readAsDataURL(file)})}
+async function prepareScanImage(file){
+  if(file.size<=4*1024*1024)return {base64:await fileToBase64(file),mediaType:file.type||"image/jpeg"};
+  const url=URL.createObjectURL(file);
+  try{const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error("Could not decode image"));i.src=url});
+    const max=1600,scale=Math.min(1,max/Math.max(img.width,img.height));
+    const canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+    canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+    const blob=await new Promise(r=>canvas.toBlob(r,"image/jpeg",.82));
+    return {base64:await fileToBase64(blob),mediaType:"image/jpeg"};
+  }finally{URL.revokeObjectURL(url)}
+}\n\nasync function processScan(file){
   if(!file.type.startsWith("image/")){alert("Please choose an image file.");return}
   $("scanStatus").textContent="🔎 Preparing secure identification…";
   if(apiBase()){
     try{
       const data=await fetch(fnUrl("identify-product"),{
         method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({image_base64: await fileToBase64(file), media_type:file.type || "image/jpeg"})
+        body:JSON.stringify({image_base64: (await prepareScanImage(file)).base64, media_type: (await prepareScanImage(file)).mediaType})
       }).then(r=>r.json());
       const identified=data?.product || parseVisionResult(data?.result);\n      if(identified?.name){\n        const label=[identified.brand,identified.model,identified.name].filter(Boolean).join(" ").replace(/\\s+/g," ").trim();\n        $("scanStatus").textContent="✓ Identified: "+label;\n        $("searchInput").value=label;\n        search(label);\n        return;\n      }
     }catch(_){}
