@@ -67,14 +67,16 @@ Deno.serve(async (req) => {
     if (!query) return json({ query: "", products: [], generated_at: new Date().toISOString() });
 
     const liveOffers = await searchRetailers(query);
-    const qWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !/^(under|below|less|than|with|for|the)$/.test(w));
+    const qWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !/^(under|below|less|than|with|for|the|price|max|maximum|up|to)$/.test(w));
+    const priceMatch = query.match(/(?:under|below|less than|max(?:imum)?(?: price)?|up to)\s*r?\s*([\d\s,.]+)/i);
+    const priceCeiling = priceMatch ? Number(priceMatch[1].replace(/[\s,]/g, "")) : null;
     const liveProducts = liveOffers
       .filter((offer: any) => {
         const haystack = [offer.name, offer.brand, offer.model, offer.category, offer.spec].join(" ").toLowerCase();
-        return qWords.length === 0 || qWords.some(w => haystack.includes(w));
+        return (qWords.length === 0 || qWords.some(w => haystack.includes(w)));
       })
       .map(normalizeLive)
-      .filter((p: any) => Number.isFinite(p.price) && p.price >= 0);
+      .filter((p: any) => Number.isFinite(p.price) && p.price >= 0 && (!Number.isFinite(priceCeiling) || p.price <= priceCeiling));
 
     if (liveProducts.length) {
       liveProducts.sort((a: any, b: any) => a.price - b.price);
@@ -105,8 +107,8 @@ Deno.serve(async (req) => {
     const products = (data || []).flatMap((p: any) => (p.offers || []).map((offer: any) => {
       const haystack = [p.canonical_name, p.brand, p.model, p.category, specText(p.specs || {})].join(" ").toLowerCase();
       if (qWords.length && !qWords.some(w => haystack.includes(w))) return null;
-      if (Number.isFinite(priceCeiling) && price > priceCeiling) return null;
       const price = Number(offer.price_zar);
+      if (Number.isFinite(priceCeiling) && price > priceCeiling) return null;
       return {
         id: offer.id, product_id: p.id, name: p.canonical_name, store: offer.retailer?.name || "Database",
         price, typical: price, icon: iconFor(p.category), tag: "Demo database offer",
