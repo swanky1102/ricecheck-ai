@@ -4,3 +4,5 @@
 .card-actions{flex-wrap:wrap}.card-actions button{min-width:0}.offer-link{display:block;margin-top:12px;color:#4f46e5;font-size:12px;font-weight:700;text-decoration:none}.offer-link:hover{text-decoration:underline}
 
 .auth-section{max-width:1180px;margin:auto;padding:20px 28px 70px}.auth-card{background:#fff;border:1px solid #e4e6ea;border-radius:16px;padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center}.auth-card h2{margin:6px 0;font-size:26px}.auth-card p{color:#7d858f;font-size:13px}.auth-fields{display:grid;gap:10px}.auth-fields input{border:1px solid #dfe2e7;border-radius:9px;padding:12px;font:inherit}.auth-actions{display:flex;gap:8px;flex-wrap:wrap}.auth-actions button{border-radius:9px;padding:10px 14px;font-weight:700}.auth-actions .primary{background:#111827;color:#fff}.auth-actions .secondary{background:#f0f1f4;color:#202630}@media(max-width:800px){.auth-section{padding-left:18px;padding-right:18px}.auth-card{grid-template-columns:1fr}}
+.brain-line{margin-top:9px;font-size:.78rem;font-weight:700;opacity:.82;letter-spacing:.01em}
+.card .tag{font-weight:800}
