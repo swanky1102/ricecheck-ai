@@ -16,6 +16,9 @@ const state = {
   alerts:JSON.parse(localStorage.getItem("pc_alerts_v3") || "[]")
 };
 let lastProduct=null;
+let authUser=null;
+const authTokenKey="pricecheck_access_token_v1";
+window.PRICECHECK_SUPABASE_ACCESS_TOKEN=localStorage.getItem(authTokenKey)||"";
 
 const $ = id => document.getElementById(id);
 const money = n => "R" + Number(n || 0).toLocaleString("en-ZA",{minimumFractionDigits:0,maximumFractionDigits:2});
@@ -38,6 +41,59 @@ function saveLocal(){
   renderSaved();
 }
 function updateBadge(){$("savedBadge").textContent=String(state.saved.length)}
+function supabaseUrl(){return String(window.PRICECHECK_SUPABASE_URL||"").replace(/\/$/,"")}
+function supabaseHeaders(){return {"Content-Type":"application/json","apikey":String(window.PRICECHECK_SUPABASE_PUBLISHABLE_KEY||"")}}
+async function authRequest(path,body){
+  const url=supabaseUrl()+"/auth/v1/"+path;
+  const r=await fetch(url,{method:"POST",headers:supabaseHeaders(),body:JSON.stringify(body)});
+  const text=await r.text(); let data={}; try{data=text?JSON.parse(text):{}}catch(_){data={error_description:text}};
+  if(!r.ok) throw new Error(data.error_description||data.msg||data.message||data.error||"Authentication failed");
+  return data;
+}
+function setAuthSession(data){
+  const token=data?.access_token||"";
+  authUser=data?.user||null;
+  window.PRICECHECK_SUPABASE_ACCESS_TOKEN=token;
+  if(token)localStorage.setItem(authTokenKey,token); else localStorage.removeItem(authTokenKey);
+  renderAuth();
+}
+function renderAuth(){
+  const signed=Boolean(window.PRICECHECK_SUPABASE_ACCESS_TOKEN);
+  $("authTitle").textContent=signed?"Signed in to PriceCheck AI":"Sign in to PriceCheck AI";
+  $("authStatus").textContent=signed?"Your account can create server-side price alerts.":"Create an account to sync price alerts securely.";
+  $("signInBtn").classList.toggle("hidden",signed);
+  $("signUpBtn").classList.toggle("hidden",signed);
+  $("signOutBtn").classList.toggle("hidden",!signed);
+}
+async function signIn(){
+  const email=$("authEmail").value.trim(), password=$("authPassword").value;
+  if(!email||!password){alert("Enter your email and password.");return}
+  try{setAuthSession(await authRequest("token?grant_type=password",{email,password}));alert("Signed in.");}
+  catch(e){alert(e.message)}
+}
+async function signUp(){
+  const email=$("authEmail").value.trim(), password=$("authPassword").value;
+  if(!email||password.length<6){alert("Enter an email and a password with at least 6 characters.");return}
+  try{
+    const data=await authRequest("signup",{email,password});
+    if(data.access_token)setAuthSession(data);
+    alert(data.access_token?"Account created and signed in.":"Account created. Check your email if confirmation is required.");
+  }catch(e){alert(e.message)}
+}
+async function loadServerAlerts(){
+  if(!window.PRICECHECK_SUPABASE_ACCESS_TOKEN||!apiBase())return;
+  try{
+    const r=await fetch(fnUrl("alerts"),{headers:{Accept:"application/json",Authorization:"Bearer "+window.PRICECHECK_SUPABASE_ACCESS_TOKEN}});
+    if(r.status===401){setAuthSession({});return}
+    const d=await r.json();
+    if(Array.isArray(d.alerts)){state.alerts=d.alerts.map(a=>({...a,product_id:String(a.product_id)}));saveLocal()}
+  }catch(_){}
+}
+$("signInBtn").onclick=signIn;
+$("signUpBtn").onclick=signUp;
+$("signOutBtn").onclick=()=>{setAuthSession({});alert("Signed out.")};
+$("accountBtn").onclick=()=>{$("account").scrollIntoView({behavior:"smooth",block:"center"});$("authEmail").focus()};
+renderAuth();
 
 function normalizeProduct(p,index){
   return {
@@ -296,4 +352,5 @@ async function processScan(file){
 
 updateBadge();
 renderSaved();
+loadServerAlerts();
 render(state.results);
