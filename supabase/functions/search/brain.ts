@@ -42,6 +42,7 @@ function key(o: any) {
 }
 
 function similarity(a: any, b: any) {
+  if (isSameProduct(a,b)) return 1;
   const ak = key(a), bk = key(b);
   if (!ak || !bk) return 0;
   if (ak === bk) return 1;
@@ -55,7 +56,7 @@ export function think(offers: any[], intent: BrainIntent) {
     (intent.price_ceiling == null || Number(o.price) <= intent.price_ceiling));
   const groups: any[] = [];
   for (const offer of eligible) {
-    let group = groups.find(g => similarity(g.representative, offer) >= 0.75);
+    let group = groups.find(g => isSameProduct(g.representative, offer));
     if (!group) { group = { representative: offer, offers: [] }; groups.push(group); }
     group.offers.push(offer);
   }
@@ -66,9 +67,54 @@ export function think(offers: any[], intent: BrainIntent) {
     const freshness = group.offers.reduce((s: number,o: any)=>s + (o.stale ? 0 : 1), 0) / group.offers.length;
     const stock = best.in_stock === false ? 0 : 1;
     const confidence = Math.min(100, Math.round(50 + Math.min(25, retailerCount*8) + freshness*15 + stock*10));
-    return { product: best, offers: group.offers, retailer_count: retailerCount, confidence,
+    return { product: best, offers: group.offers, retailer_count: retailerCount, confidence, identity: identifier(best) ? "verified" : "inferred",
       savings_vs_next: group.offers.length > 1 ? Number(group.offers[1].price)-Number(best.price) : null };
   });
   scored.sort((a,b) => Number(a.product.price)-Number(b.product.price));
   return scored;
+}
+
+
+function identifier(o: any) {
+  const fields = [o.gtin, o.ean, o.upc, o.barcode, o.mpn, o.model, o.sku, o.external_id, o.product_key];
+  for (const v of fields) {
+    const s = norm(v);
+    if (s && s.length >= 4) return s;
+  }
+  return "";
+}
+
+function exactIdentity(a: any, b: any) {
+  const ai = identifier(a), bi = identifier(b);
+  return !!ai && !!bi && ai === bi;
+}
+
+function variantSignature(o: any) {
+  const s = norm([o.name, o.model, o.spec].join(" "));
+  return s
+    .replace(/\b(black|white|blue|red|green|silver|gold|grey|gray|pink|purple)\b/g, " ")
+    .replace(/\b(128|256|512|1024|2048|4096)\s?(gb|tb)\b/g, "$1$2")
+    .replace(/\b(4|8|16|32|64|128)\s?gb\b/g, "$1gb")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function identityScore(a: any, b: any) {
+  if (exactIdentity(a,b)) return 1;
+  const am = norm(a.model), bm = norm(b.model);
+  if (am && bm && am === bm) return 0.96;
+  const ak = variantSignature(a), bk = variantSignature(b);
+  if (!ak || !bk) return 0;
+  const at = new Set(ak.split(" ")), bt = new Set(bk.split(" "));
+  const inter = [...at].filter(x => bt.has(x)).length;
+  return inter / Math.max(1, Math.min(at.size, bt.size));
+}
+
+function isSameProduct(a: any, b: any) {
+  if (exactIdentity(a,b)) return true;
+  const am = norm(a.model), bm = norm(b.model);
+  if (am && bm && am !== bm) return false;
+  const ac = norm(a.category), bc = norm(b.category);
+  if (ac && bc && ac !== bc) return false;
+  return identityScore(a,b) >= 0.82;
 }
