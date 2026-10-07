@@ -219,7 +219,8 @@ async function setAlertById(id){
         body:JSON.stringify({product_id:p.product_id||p.id,target_price_zar:target})
       });
       const d=await r.json();
-      if(!r.ok) throw new Error(d.error||"Alert failed");\n      if(d.alert){state.alerts=[d.alert,...state.alerts.filter(a=>a.id!==d.alert.id)];saveLocal()}\n      alert("Price alert created.");
+      if(!r.ok) throw new Error(d.error||"Alert failed");
+      if(d.alert){state.alerts=[d.alert,...state.alerts.filter(a=>a.id!==d.alert.id)];saveLocal()}\n      alert("Price alert created.");
       return;
     }catch(e){alert(e.message+" Local demo alert was saved instead.");}
   }
@@ -282,7 +283,9 @@ async function compatById(id){
   }
 }
 
-function parseVisionResult(result){const blocks=Array.isArray(result?.content)?result.content:[];const text=blocks.map(x=>x?.text||"").join("\n").trim();if(!text)return null;try{return JSON.parse(text)}catch(_){const m=text.match(/\{[\s\S]*\}/);if(!m)return null;try{return JSON.parse(m[0])}catch(_){return null}}}\n\nfunction closeModal(){$("modal").classList.add("hidden")}
+function parseVisionResult(result){const blocks=Array.isArray(result?.content)?result.content:[];const text=blocks.map(x=>x?.text||"").join("\n").trim();if(!text)return null;try{return JSON.parse(text)}catch(_){const m=text.match(/\{[\s\S]*\}/);if(!m)return null;try{return JSON.parse(m[0])}catch(_){return null}}}
+
+function closeModal(){$("modal").classList.add("hidden")}
 $("closeModal").onclick=closeModal;
 $("closeModal2").onclick=closeModal;
 
@@ -338,7 +341,9 @@ async function prepareScanImage(file){
     const blob=await new Promise(r=>canvas.toBlob(r,"image/jpeg",.82));
     return {base64:await fileToBase64(blob),mediaType:"image/jpeg"};
   }finally{URL.revokeObjectURL(url)}
-}\n\nasync function processScan(file){
+}
+
+async function processScan(file){
   if(!file.type.startsWith("image/")){alert("Please choose an image file.");return}
   $("scanStatus").textContent="🔎 Preparing secure identification…";
   if(apiBase()){
@@ -348,7 +353,14 @@ async function prepareScanImage(file){
         method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({image_base64:prepared.base64,media_type:prepared.mediaType})
       }).then(r=>r.json());
-      const identified=data?.product || parseVisionResult(data?.result);\n      if(identified?.name){\n        const label=[identified.brand,identified.model,identified.name].filter(Boolean).join(" ").replace(/\\s+/g," ").trim();\n        $("scanStatus").textContent="✓ Identified: "+label;\n        $("searchInput").value=label;\n        search(label);\n        return;\n      }
+      const identified=data?.product || parseVisionResult(data?.result);
+      if(identified?.name){
+        const label=[identified.brand,identified.model,identified.name].filter(Boolean).join(" ").replace(/\s+/g," ").trim();
+        $("scanStatus").textContent="✓ Identified: "+label;
+        $("searchInput").value=label;
+        search(label);
+        return;
+      }
     }catch(_){}
   }
   $("scanStatus").innerHTML="<b>Demo identification:</b> 16GB DDR4-3200 SO-DIMM. Connect the secure vision backend for real image identification.";
