@@ -129,15 +129,27 @@ async function backendSearch(q){
   return Array.isArray(data?.products) ? data.products.map(normalizeProduct) : [];
 }
 
+function priceCeiling(query){
+  const m=String(query||"").match(/(?:under|below|less than|max(?:imum)?(?: price)?|up to)\s*r?\s*([\d\s,.]+)/i);
+  if(!m)return null;
+  const n=Number(m[1].replace(/[\s,]/g,""));
+  return Number.isFinite(n)?n:null;
+}
 function localSearch(){
   const q=state.query.toLowerCase();
+  const ceiling=priceCeiling(state.query);
   return DEMO_PRODUCTS.filter(p=>{
     const hay=(p.name+" "+p.spec+" "+p.store+" "+p.category).toLowerCase();
     return (!q || q.split(/\s+/).filter(x=>x.length>2 && !["under","below","less","than"].includes(x)).some(w=>hay.includes(w))) &&
-      (state.filter==="all" || p.category===state.filter);
+      (state.filter==="all" || p.category===state.filter) &&
+      (ceiling===null || Number(p.price)<=ceiling);
   });
 }
 
+function applyPriceLimit(list){
+  const ceiling=priceCeiling(state.query);
+  return ceiling===null?list:list.filter(p=>Number(p.price||0)<=ceiling);
+}
 function sorted(list){
   const out=[...list];
   if(state.sort==="price-low") out.sort((a,b)=>a.price-b.price);
@@ -148,7 +160,7 @@ function sorted(list){
 }
 
 function render(list=state.results){
-  const visible=sorted(list).filter(p=>state.filter==="all" || p.category===state.filter);
+  const visible=sorted(applyPriceLimit(list)).filter(p=>state.filter==="all" || p.category===state.filter);
   $("results").innerHTML=visible.map(p=>{
     const saved=state.saved.includes(p.id);
     const pct=p.typical>0?Math.max(8,Math.min(100,Math.round((p.typical-p.price)/p.typical*100))):8;
