@@ -25,7 +25,8 @@ Supported connector slots are prepared for: Takealot, Makro, Game, Woolworths, C
 
 ### Connector configuration
 Set server-side Supabase Edge Function secrets for any feeds you are authorized to use:
-- `REEFAPI_KEY` for the Takealot read connector.
+- `REEFAPI_KEY` for the optional Takealot read connector.
+- `AWIN_FEED_URL` for an authorized Awin product feed URL (comparison-site product feeds are supported by Awin).
 - `MAKRO_FEED_URL`
 - `GAME_FEED_URL`
 - `WOOLWORTHS_FEED_URL`
