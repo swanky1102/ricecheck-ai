@@ -220,7 +220,8 @@ async function setAlertById(id){
       });
       const d=await r.json();
       if(!r.ok) throw new Error(d.error||"Alert failed");
-      if(d.alert){state.alerts=[d.alert,...state.alerts.filter(a=>a.id!==d.alert.id)];saveLocal()}\n      alert("Price alert created.");
+      if(d.alert){state.alerts=[d.alert,...state.alerts.filter(a=>a.id!==d.alert.id)];saveLocal()}
+      alert("Price alert created.");
       return;
     }catch(e){alert(e.message+" Local demo alert was saved instead.");}
   }
